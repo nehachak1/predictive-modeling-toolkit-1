@@ -1,5 +1,6 @@
 import argparse
 import numpy as np
+import matplotlib.pyplot as plt
 
 from src.methods.dummy_methods import DummyClassifier
 from src.methods.logistic_regression import LogisticRegression
@@ -133,35 +134,107 @@ def main(args):
 
     # Hyperparameter search for logistic regression
 
-    if args.task == "classification" and not args.test:
+    if args.method == "logistic_regression" and not args.test:
+        print("\n--- Logistic Regression Hyperparameter Search ---")
 
-        if args.method == "logistic_regression":
-            print("\n--- Logistic Regression Hyperparameter Search ---")
+        max_iters_list = [50, 100, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000]
+        lr_list = [1e-4, 1e-3, 1e-2, 0.1]
 
-            max_iters_list = [50, 100, 200, 400, 800]
-            lr_list = [1e-4, 1e-3, 1e-2, 0.1]
+        best_f1 = 0
+        best_acc = 0
+        best_config = None
+        results = [] 
 
-            best_acc = 0
-            best_config = None
+        for max_iter in max_iters_list:
+            for lr in lr_list:
+                model = LogisticRegression(lr=lr, max_iters=max_iter)
 
-            for max_iter in max_iters_list:
-                for lr in lr_list:
-                    model = LogisticRegression(lr=lr, max_iters=max_iter)
+                model.fit(train_features, train_labels_classif)
+                preds = model.predict(test_features)
 
-                    model.fit(train_features, train_labels_classif)
-                    preds = model.predict(test_features)
+                acc = accuracy_fn(preds, test_labels_classif)
+                f1 = macrof1_fn(preds, test_labels_classif)
 
-                    acc = accuracy_fn(preds, test_labels_classif)
-                    f1 = macrof1_fn(preds, test_labels_classif)
+                print(f"max_iter={max_iter}, lr={lr} → Acc={acc:.3f}, F1={f1:.4f}")
 
-                    print(f"max_iter={max_iter}, lr={lr} → Acc={acc:.3f}, F1={f1:.4f}")
+                results.append((max_iter, lr, acc, f1)) 
 
-                    if acc > best_acc:
-                        best_acc = acc
-                        best_config = (max_iter, lr)
+                if f1 > best_f1:
+                    best_f1 = f1
+                    best_acc = acc
+                    best_config = (max_iter, lr)
 
-            print(f"\nBest config: max_iter={best_config[0]}, lr={best_config[1]} (Acc={best_acc:.3f})")
+        print("\n--- Best Configuration ---")
+        print(f"max_iter={best_config[0]}, lr={best_config[1]}")
+        print(f"Validation Accuracy: {best_acc:.3f}")
+        print(f"Validation F1-score: {best_f1:.4f}")
 
+        fixed_iter = best_config[0]
+
+        lrs = []
+        val_acc = []
+        val_f1 = []
+
+        for max_iter, lr, acc, f1 in results:
+            if max_iter == fixed_iter:
+                lrs.append(lr)
+                val_acc.append(acc)
+                val_f1.append(f1 * 100)  
+
+        train_acc = [accuracy_fn(preds_train, train_labels_classif)] * len(lrs)
+        train_f1 = [macrof1_fn(preds_train, train_labels_classif) * 100] * len(lrs)
+
+        plt.figure(figsize=(8,6))
+
+        plt.plot(lrs, train_acc, 'o--', label="Train Accuracy (%)")
+        plt.plot(lrs, train_f1, 's--', label="Train F1-score (%)")
+
+        plt.plot(lrs, val_f1, 's-', label="Validation F1-score (%)")
+        plt.plot(lrs, val_acc, 'o-', label="Validation Accuracy (%)")
+
+        plt.xscale("log")
+        plt.xlabel("Value of Learning Rate (lr)")
+        plt.ylabel("Score (%)")
+        plt.title("Logistic Regression - Accuracy & F1-score vs. Learning Rate")
+
+        plt.legend()
+        plt.grid(True)
+
+        plt.show()
+
+        fixed_lr = best_config[1]  
+
+        iters = []
+        val_acc_2 = []
+        val_f1_2 = []
+
+        for max_iter, lr, acc, f1 in results:
+            if lr == fixed_lr:
+                iters.append(max_iter)
+                val_acc_2.append(acc)
+                val_f1_2.append(f1 * 100)  # scale F1
+
+        train_acc_2 = [accuracy_fn(preds_train, train_labels_classif)] * len(iters)
+        train_f1_2 = [macrof1_fn(preds_train, train_labels_classif) * 100] * len(iters)
+
+        plt.figure(figsize=(8,6))
+
+        plt.plot(iters, train_acc_2, 'o--', label="Train Accuracy (%)")
+        plt.plot(iters, train_f1_2, 's--', label="Train F1-score (%)")
+
+        plt.plot(iters, val_f1_2, 's-', label="Validation F1-score (%)")
+        plt.plot(iters, val_acc_2, 'o-', label="Validation Accuracy (%)")
+
+        plt.xlabel("Number of Iterations (max_iters)")
+        plt.ylabel("Score (%)")
+        plt.title("Logistic Regression - Accuracy & F1-score vs. Max Iterations")
+
+        plt.legend()
+        plt.grid(True)
+
+        plt.show()
+
+        return  
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
