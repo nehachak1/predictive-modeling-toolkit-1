@@ -73,8 +73,11 @@ class LogisticRegression(object):
                 The row i corresponds to the prediction of the ith data sample, and 
                 the column j to the jth class. So element [i, j] is P(y_i=k | x_i, W)
         """
-        numerator = np.exp(np.dot(data, W))
-        return numerator/(np.sum(numerator))
+        z = np.dot(data, W)
+        z = z - np.max(z, axis=1, keepdims=True)
+
+        exp_z = np.exp(z)
+        return exp_z / np.sum(exp_z, axis=1, keepdims=True)
 
     def __loss_logistic_multi(self, data, labels, W):
         """ 
@@ -89,7 +92,7 @@ class LogisticRegression(object):
         """
         soft = self.__f_softmax(data, W)
         first_sum = np.sum(labels * np.log(soft))
-        return -np.sum(first_sum)
+        return -np.mean(np.sum(labels * np.log(soft + 1e-15), axis=1))
 
     def __gradient_logistic_multi(self, data, labels, W):
         """
@@ -102,7 +105,7 @@ class LogisticRegression(object):
         Returns:
             grad (np.array): Gradients of shape (D, C)
         """
-        return data.T @ (self.__f_softmax(data, W) - labels)
+        return (data.T @ (self.__f_softmax(data, W) - labels)) / data.shape[0]
 
     def __logistic_regression_predict_multi(self, data, W):
         """
@@ -138,7 +141,7 @@ class LogisticRegression(object):
             gradient = self.__gradient_logistic_multi(data, labels, weights)
             old_weights = weights
             weights = weights - lr*gradient
-            if np.all(old_weights == weights):
+            if np.linalg.norm(old_weights - weights) < 1e-6:
                 print(f"LR has converged after {it+1} iterations!")
                 break
 
