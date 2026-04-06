@@ -37,20 +37,8 @@ def main(args):
     ## 2. Then we must prepare it. This is where you can create a validation set,
     #  normalize, add bias, etc.
 
-    means = np.mean(train_features, axis=0)
-    stds = np.std(train_features, axis=0)
-    stds[stds == 0] = 1  # avoid division by zero
-
-    train_features = normalize_fn(train_features, means, stds)
-    test_features = normalize_fn(test_features, means, stds)
-
-    # Add bias term (for linear/logistic regression)
-    train_features = append_bias_term(train_features)
-    test_features = append_bias_term(test_features)
-
     # Make a validation set (it can overwrite xtest, ytest)
     if not args.test:
-        ### WRITE YOUR CODE HERE
         num_train = int(0.8 * len(train_features))
 
         # Split features
@@ -70,7 +58,17 @@ def main(args):
         test_labels_classif = yvalid_classif
         test_labels_reg = yvalid_reg
 
-    ### WRITE YOUR CODE HERE to do any other data processing
+    means = np.mean(train_features, axis=0)
+    stds = np.std(train_features, axis=0)
+    stds[stds == 0] = 1  # avoid division by zero
+
+    train_features = normalize_fn(train_features, means, stds)
+    test_features = normalize_fn(test_features, means, stds)
+
+    # Add bias term (for linear/logistic regression)
+    if args.method in ["logistic_regression", "linear_regression"]:
+        train_features = append_bias_term(train_features)
+        test_features = append_bias_term(test_features)
 
     ## 3. Initialize the method you want to use.
 
@@ -79,8 +77,7 @@ def main(args):
         method_obj = DummyClassifier(arg1=1, arg2=2)
 
     elif args.method == "knn":
-        ### WRITE YOUR CODE HERE
-        method_obj = KNN(k=args.K)
+        method_obj = KNN(k=args.K, task_kind=args.task, distance_metric=args.distance_metric)
 
     elif args.method == "logistic_regression":
         ### WRITE YOUR CODE HERE
@@ -279,6 +276,12 @@ if __name__ == "__main__":
         action="store_true",
         help="train on whole training data and evaluate on the test data, "
              "otherwise use a validation set",
+    )
+    parser.add_argument(
+        "--distance_metric",
+        type=str,
+        default="euclidean",
+        help="euclidean / manhattan",
     )
     # Feel free to add more arguments here if you need!
 
