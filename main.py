@@ -127,10 +127,92 @@ def main(args):
     else:
         raise ValueError(f"Unknown task: {args.task}")
 
-    ### WRITE YOUR CODE HERE if you want to add other outputs, visualization, etc.
+    ### Additional outputs / visualizations / hyperparameter search
 
-    # Hyperparameter search for logistic regression
+    # ---- k-NN classification: performance vs. k ----
+    if args.method == "knn" and args.task == "classification":
+        print("\n--- k-NN Classification Hyperparameter Search ---")
 
+        k_list = list(range(1, 61))
+        distance_metrics = ["euclidean", "manhattan"]
+
+        for dist in distance_metrics:
+            train_accs = []
+            test_accs = []
+            train_f1s = []
+            test_f1s = []
+
+            for k in k_list:
+                model = KNN(k=k, task_kind="classification", distance_metric=dist)
+
+                preds_train = model.fit(train_features, train_labels_classif)
+                preds_test = model.predict(test_features)
+
+                train_acc = accuracy_fn(preds_train, train_labels_classif)
+                test_acc = accuracy_fn(preds_test, test_labels_classif)
+
+                train_f1 = macrof1_fn(preds_train, train_labels_classif)
+                test_f1 = macrof1_fn(preds_test, test_labels_classif)
+
+                train_accs.append(train_acc)
+                test_accs.append(test_acc)
+                train_f1s.append(train_f1 * 100)
+                test_f1s.append(test_f1 * 100)
+
+            plt.figure(figsize=(8, 6))
+
+            plt.plot(k_list, train_accs, 'o--', label="Train Accuracy (%)", markersize=3)
+            plt.plot(k_list, test_accs, 'o-', label="Test Accuracy (%)", markersize=3)
+            plt.plot(k_list, train_f1s, 's--', label="Train F1-score (%)", markersize=3)
+            plt.plot(k_list, test_f1s, 's-', label="Test F1-score (%)", markersize=3)
+
+            plt.xlabel("Number of Neighbors (k)")
+            plt.ylabel("Score (%)")
+            plt.title(f"k-NN (Full Training/Test) - Accuracy & F1-score vs. k ({dist.capitalize()} Distance)")
+            plt.legend()
+            plt.grid(True)
+            plt.show()
+
+        return
+
+    # ---- k-NN regression: performance vs. k ----
+    if args.method == "knn" and args.task == "regression":
+        print("\n--- k-NN Regression Hyperparameter Search ---")
+
+        k_list = list(range(1, 61))
+        distance_metrics = ["euclidean", "manhattan"]
+
+        for dist in distance_metrics:
+            train_mses = []
+            test_mses = []
+        
+            for k in k_list:
+                model = KNN(k=k, task_kind="regression", distance_metric=dist)
+
+                preds_train = model.fit(train_features, train_labels_reg)
+                preds_test = model.predict(test_features)
+
+                train_mse = mse_fn(preds_train, train_labels_reg)
+                test_mse = mse_fn(preds_test, test_labels_reg)
+
+                train_mses.append(train_mse)
+                test_mses.append(test_mse)
+
+            plt.figure(figsize=(8, 6))
+
+            plt.plot(k_list, train_mses, 'o--', label="Train MSE", markersize=3)
+            plt.plot(k_list, test_mses, 'o-', label="Test MSE", markersize=3)
+
+            plt.xlabel("Number of Neighbors (k)")
+            plt.ylabel("MSE")
+            plt.title(f"k-NN (Full Training/Test) - MSE vs. k ({dist.capitalize()} Distance)")
+            plt.legend()
+            plt.grid(True)
+            plt.show()
+
+        return
+    
+    # ---- Logistic regression: hyperparameter search ----
     if args.method == "logistic_regression" and not args.test:
         print("\n--- Logistic Regression Hyperparameter Search ---")
 
@@ -166,6 +248,7 @@ def main(args):
         print(f"Validation Accuracy: {best_acc:.3f}")
         print(f"Validation F1-score: {best_f1:.4f}")
 
+        # ---- plot vs learning rate for fixed best max_iter ----
         fixed_iter = best_config[0]
 
         lrs = []
@@ -199,6 +282,7 @@ def main(args):
 
         plt.show()
 
+        # ---- plot vs max_iters for fixed best lr ----
         fixed_lr = best_config[1]  
 
         iters = []
