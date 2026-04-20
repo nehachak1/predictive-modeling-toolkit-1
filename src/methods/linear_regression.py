@@ -11,6 +11,10 @@ class LinearRegression(object):
         Initialize the new object (see dummy_methods.py)
         and set its arguments.
         """
+        self.weight = None
+        self.bias = None
+        self.theta = None
+
 
     def fit(self, training_data, training_labels):
         """
@@ -29,7 +33,16 @@ class LinearRegression(object):
         ###
         #### WRITE YOUR CODE HERE!
         ###
-        ##
+        #
+
+        theta = np.linalg.pinv(training_data) @ training_labels
+
+        self.theta = theta
+
+        self.bias = theta[0]
+        self.weight = theta[1:]
+
+        pred_labels = training_data @ self.theta
         return pred_labels
 
     def predict(self, test_data):
@@ -46,4 +59,5 @@ class LinearRegression(object):
         #### WRITE YOUR CODE HERE!
         ###
         ##
+        pred_labels = test_data @self.theta
         return pred_labels

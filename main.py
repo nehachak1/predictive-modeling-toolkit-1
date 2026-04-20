@@ -85,7 +85,7 @@ def main(args):
 
     elif args.method == "linear_regression":
         ### WRITE YOUR CODE HERE
-        method_obj = LinearRegression(lr=args.lr, max_iters=args.max_iters)
+        method_obj = LinearRegression()
 
     else:
         raise ValueError(f"Unknown method: {args.method}")
