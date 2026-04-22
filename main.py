@@ -124,6 +124,14 @@ def main(args):
         test_mse = mse_fn(preds, test_labels_reg)
         print(f"Test set:  MSE = {test_mse:.6f}")
 
+        unique_labels = np.unique(test_labels_reg)
+
+    print("\n--- MSE per True Label ---")
+    for val in unique_labels:
+        mask = (test_labels_reg == val)
+        mse_val = np.mean((test_labels_reg[mask] - preds[mask]) ** 2)
+        print(f"Label {val}: MSE = {mse_val:.4f}")
+
     else:
         raise ValueError(f"Unknown task: {args.task}")
 
@@ -315,7 +323,57 @@ def main(args):
 
         plt.show()
 
-        return  
+    if args.method == "linear_regression" and args.task == "regression":
+        
+    
+        plt.figure(figsize=(8,6))
+
+        # Scatter: true vs predicted
+        plt.scatter(
+            test_labels_reg,
+            preds,
+            color="purple",
+            alpha=0.65,
+            s=45,
+            label="Predictions"
+        )
+
+        # Perfect prediction line y = x
+        min_val = min(np.min(test_labels_reg), np.min(preds))
+        max_val = max(np.max(test_labels_reg), np.max(preds))
+
+        plt.plot(
+            [min_val, max_val],
+            [min_val, max_val],
+            color="black",
+            linestyle="--",
+            linewidth=2,
+            label="Perfect Prediction"
+        )
+
+        # 1D regression line fitted on displayed points
+        coef = np.polyfit(test_labels_reg, preds, 1)   # slope, intercept
+        x_line = np.linspace(min_val, max_val, 200)
+        y_line = coef[0] * x_line + coef[1]
+
+        plt.plot(
+            x_line,
+            y_line,
+            color="red",
+            linewidth=2.5,
+            label=f"L.R line of the graph\ny = {coef[0]:.2f}x + {coef[1]:.2f}\nMSE of the model = {test_mse:.4f}"
+        )
+
+        plt.xlabel("True Labels")
+        plt.ylabel("Predicted Labels")
+        plt.title("Linear Regression Model")
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.show()
+
+    return
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
