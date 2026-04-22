@@ -48,9 +48,9 @@ class KNN(object):
 
         for x in test_data: 
             if self.distance_metric == "euclidean": 
-                distances = np.sqrt(np.sum((self.training_data - x) ** 2, axis=1))
+                distances = np.sqrt(np.sum((self.training_data - x) ** 2, axis = 1))
             elif self.distance_metric == "manhattan":
-                distances = np.sum(np.abs(self.training_data - x), axis=1)
+                distances = np.sum(np.abs(self.training_data - x), axis = 1)
             else: 
                 raise ValueError("distance_metric must be 'euclidean' or 'manhattan'")
 
