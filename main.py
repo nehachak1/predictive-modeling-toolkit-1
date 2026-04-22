@@ -141,11 +141,11 @@ def main(args):
 
         unique_labels = np.unique(test_labels_reg)
 
-    print("\n--- MSE per True Label ---")
-    for val in unique_labels:
-        mask = (test_labels_reg == val)
-        mse_val = np.mean((test_labels_reg[mask] - preds[mask]) ** 2)
-        print(f"Label {val}: MSE = {mse_val:.4f}")
+        print("\n--- MSE per True Label ---")
+        for val in unique_labels:
+            mask = (test_labels_reg == val)
+            mse_val = np.mean((test_labels_reg[mask] - preds[mask]) ** 2)
+            print(f"Label {val}: MSE = {mse_val:.4f}")
 
     else:
         raise ValueError(f"Unknown task: {args.task}")
