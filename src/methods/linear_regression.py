@@ -6,15 +6,14 @@ class LinearRegression(object):
     Linear regression.
     """
 
-    def __init__(self):
+    def __init__(self, regularization=None, lambda_=0.0):
         """
         Initialize the new object (see dummy_methods.py)
         and set its arguments.
         """
-        self.weight = None
-        self.bias = None
+        self.regularization = regularization
+        self.lambda_ = lambda_
         self.theta = None
-
 
     def fit(self, training_data, training_labels):
         """
@@ -29,15 +28,28 @@ class LinearRegression(object):
         Returns:
             pred_labels (np.array): target of shape (N,)
         """
+        X = np.asarray(training_data, dtype=float)
+        y = np.asarray(training_labels, dtype=float).reshape(-1)
 
-        theta = np.linalg.pinv(training_data) @ training_labels
+        if self.regularization is None:
+            self.theta = np.linalg.pinv(X) @ y
 
-        self.theta = theta
+        elif self.regularization == "l2":
+            if self.lambda_ <= 0:
+                raise ValueError("lambda_ must be > 0 when regularization is 'l2'.")
 
-        self.bias = theta[0]
-        self.weight = theta[1:]
+            D = X.shape[1]
+            I = np.eye(D)
 
-        pred_labels = training_data @ self.theta
+            # do not regularize the bias term if bias was appended as first column
+            I[0, 0] = 0
+
+            self.theta = np.linalg.solve(X.T @ X + self.lambda_ * I, X.T @ y)
+
+        else:
+            raise ValueError("regularization must be None or 'l2'.")
+
+        pred_labels = self.predict(X)
         return pred_labels
 
     def predict(self, test_data):
@@ -49,6 +61,9 @@ class LinearRegression(object):
         Returns:
             pred_labels (np.array): labels of shape (N,)
         """
-        
-        pred_labels = test_data @self.theta
+        if self.theta is None:
+            raise ValueError("Model must be fitted before calling predict().")
+
+        X = np.asarray(test_data, dtype=float)
+        pred_labels = X @ self.theta
         return pred_labels
