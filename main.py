@@ -150,6 +150,243 @@ def main(args):
     else:
         raise ValueError(f"Unknown task: {args.task}")
 
+    ### Additional outputs / visualizations / hyperparameter search
+
+    # ---- k-NN classification: performance vs. k ----
+    if args.method == "knn" and args.task == "classification":
+        print("\n--- k-NN Classification Hyperparameter Search ---")
+
+        k_list = list(range(1, 61))
+        distance_metrics = ["euclidean", "manhattan"]
+
+        for dist in distance_metrics:
+            train_accs = []
+            test_accs = []
+            train_f1s = []
+            test_f1s = []
+
+            for k in k_list:
+                model = KNN(k=k, task_kind="classification", distance_metric=dist)
+
+                preds_train = model.fit(train_features, train_labels_classif)
+                preds_test = model.predict(test_features)
+
+                train_acc = accuracy_fn(preds_train, train_labels_classif)
+                test_acc = accuracy_fn(preds_test, test_labels_classif)
+
+                train_f1 = macrof1_fn(preds_train, train_labels_classif)
+                test_f1 = macrof1_fn(preds_test, test_labels_classif)
+
+                train_accs.append(train_acc)
+                test_accs.append(test_acc)
+                train_f1s.append(train_f1 * 100)
+                test_f1s.append(test_f1 * 100)
+
+            plt.figure(figsize=(8, 6))
+
+            plt.plot(k_list, train_accs, 'o--', label="Train Accuracy (%)", markersize=3)
+            plt.plot(k_list, test_accs, 'o-', label="Test Accuracy (%)", markersize=3)
+            plt.plot(k_list, train_f1s, 's--', label="Train F1-score (%)", markersize=3)
+            plt.plot(k_list, test_f1s, 's-', label="Test F1-score (%)", markersize=3)
+
+            plt.xlabel("Number of Neighbors (k)")
+            plt.ylabel("Score (%)")
+            plt.title(f"k-NN (Full Training/Test) - Accuracy & F1-score vs. k ({dist.capitalize()} Distance)")
+            plt.legend()
+            plt.grid(True)
+            plt.show()
+
+        return
+
+    # ---- k-NN regression: performance vs. k ----
+    if args.method == "knn" and args.task == "regression":
+        print("\n--- k-NN Regression Hyperparameter Search ---")
+
+        k_list = list(range(1, 61))
+        distance_metrics = ["euclidean", "manhattan"]
+
+        for dist in distance_metrics:
+            train_mses = []
+            test_mses = []
+        
+            for k in k_list:
+                model = KNN(k=k, task_kind="regression", distance_metric=dist)
+
+                preds_train = model.fit(train_features, train_labels_reg)
+                preds_test = model.predict(test_features)
+
+                train_mse = mse_fn(preds_train, train_labels_reg)
+                test_mse = mse_fn(preds_test, test_labels_reg)
+
+                train_mses.append(train_mse)
+                test_mses.append(test_mse)
+
+            plt.figure(figsize=(8, 6))
+
+            plt.plot(k_list, train_mses, 'o--', label="Train MSE", markersize=3)
+            plt.plot(k_list, test_mses, 'o-', label="Test MSE", markersize=3)
+
+            plt.xlabel("Number of Neighbors (k)")
+            plt.ylabel("MSE")
+            plt.title(f"k-NN (Full Training/Test) - MSE vs. k ({dist.capitalize()} Distance)")
+            plt.legend()
+            plt.grid(True)
+            plt.show()
+
+        return
+    
+    # Logistic regression: hyperparameter search 
+    if args.method == "logistic_regression" and not args.test:
+        print("\n--- Logistic Regression Hyperparameter Search ---")
+
+        max_iters_list = [50, 100, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000]
+        lr_list = [1e-4, 1e-3, 1e-2, 0.1]
+
+        best_f1 = 0
+        best_acc = 0
+        best_config = None
+        results = [] 
+
+        for max_iter in max_iters_list:
+            for lr in lr_list:
+                model = LogisticRegression(lr=lr, max_iters=max_iter)
+
+                model.fit(train_features, train_labels_classif)
+                preds = model.predict(test_features)
+
+                acc = accuracy_fn(preds, test_labels_classif)
+                f1 = macrof1_fn(preds, test_labels_classif)
+
+                print(f"max_iter={max_iter}, lr={lr} → Acc={acc:.3f}, F1={f1:.4f}")
+
+                results.append((max_iter, lr, acc, f1)) 
+
+                if f1 > best_f1:
+                    best_f1 = f1
+                    best_acc = acc
+                    best_config = (max_iter, lr)
+
+        print("\n--- Best Configuration ---")
+        print(f"max_iter={best_config[0]}, lr={best_config[1]}")
+        print(f"Validation Accuracy: {best_acc:.3f}")
+        print(f"Validation F1-score: {best_f1:.4f}")
+
+        # plot vs learning rate for fixed best max_iter 
+        fixed_iter = best_config[0]
+
+        lrs = []
+        val_acc = []
+        val_f1 = []
+
+        for max_iter, lr, acc, f1 in results:
+            if max_iter == fixed_iter:
+                lrs.append(lr)
+                val_acc.append(acc)
+                val_f1.append(f1 * 100)  
+
+        train_acc = [accuracy_fn(preds_train, train_labels_classif)] * len(lrs)
+        train_f1 = [macrof1_fn(preds_train, train_labels_classif) * 100] * len(lrs)
+
+        plt.figure(figsize=(8,6))
+
+        plt.plot(lrs, train_acc, 'o--', label="Train Accuracy (%)")
+        plt.plot(lrs, train_f1, 's--', label="Train F1-score (%)")
+
+        plt.plot(lrs, val_f1, 's-', label="Validation F1-score (%)")
+        plt.plot(lrs, val_acc, 'o-', label="Validation Accuracy (%)")
+
+        plt.xscale("log")
+        plt.xlabel("Value of Learning Rate (lr)")
+        plt.ylabel("Score (%)")
+        plt.title("Logistic Regression - Accuracy & F1-score vs. Learning Rate")
+
+        plt.legend()
+        plt.grid(True)
+
+        plt.show()
+
+        # plot vs max_iters for fixed best lr 
+        fixed_lr = best_config[1]  
+
+        iters = []
+        val_acc_2 = []
+        val_f1_2 = []
+
+        for max_iter, lr, acc, f1 in results:
+            if lr == fixed_lr:
+                iters.append(max_iter)
+                val_acc_2.append(acc)
+                val_f1_2.append(f1 * 100) 
+
+        train_acc_2 = [accuracy_fn(preds_train, train_labels_classif)] * len(iters)
+        train_f1_2 = [macrof1_fn(preds_train, train_labels_classif) * 100] * len(iters)
+
+        plt.figure(figsize=(8,6))
+
+        plt.plot(iters, train_acc_2, 'o--', label="Train Accuracy (%)")
+        plt.plot(iters, train_f1_2, 's--', label="Train F1-score (%)")
+
+        plt.plot(iters, val_f1_2, 's-', label="Validation F1-score (%)")
+        plt.plot(iters, val_acc_2, 'o-', label="Validation Accuracy (%)")
+
+        plt.xlabel("Number of Iterations (max_iters)")
+        plt.ylabel("Score (%)")
+        plt.title("Logistic Regression - Accuracy & F1-score vs. Max Iterations")
+
+        plt.legend()
+        plt.grid(True)
+
+        plt.show()
+
+    if args.method == "linear_regression" and args.task == "regression":
+        
+    
+        plt.figure(figsize=(8,6))
+
+        # Scatter: true vs predicted
+        plt.scatter(
+            test_labels_reg,
+            preds,
+            color="purple",
+            alpha=0.65,
+            s=45,
+            label="Predictions"
+        )
+
+        # Perfect prediction line y = x
+        min_val = min(np.min(test_labels_reg), np.min(preds))
+        max_val = max(np.max(test_labels_reg), np.max(preds))
+
+        plt.plot(
+            [min_val, max_val],
+            [min_val, max_val],
+            color="black",
+            linestyle="--",
+            linewidth=2,
+            label="Perfect Prediction"
+        )
+
+        # 1D regression line fitted on displayed points
+        coef = np.polyfit(test_labels_reg, preds, 1)   # slope, intercept
+        x_line = np.linspace(min_val, max_val, 200)
+        y_line = coef[0] * x_line + coef[1]
+
+        plt.plot(
+            x_line,
+            y_line,
+            color="red",
+            linewidth=2.5,
+            label=f"L.R line of the graph\ny = {coef[0]:.2f}x + {coef[1]:.2f}\nMSE of the model = {test_mse:.4f}"
+        )
+
+        plt.xlabel("True Labels")
+        plt.ylabel("Predicted Labels")
+        plt.title("Linear Regression Model")
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        plt.show()
+
     return
     
 
