@@ -29,11 +29,6 @@ class LinearRegression(object):
         Returns:
             pred_labels (np.array): target of shape (N,)
         """
-        ##
-        ###
-        #### WRITE YOUR CODE HERE!
-        ###
-        #
 
         theta = np.linalg.pinv(training_data) @ training_labels
 
@@ -54,10 +49,6 @@ class LinearRegression(object):
         Returns:
             pred_labels (np.array): labels of shape (N,)
         """
-        ##
-        ###
-        #### WRITE YOUR CODE HERE!
-        ###
-        ##
+        
         pred_labels = test_data @self.theta
         return pred_labels

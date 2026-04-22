@@ -73,7 +73,6 @@ def main(args):
 
     ## 3. Initialize the method you want to use.
 
-    # Follow the "DummyClassifier" example for your methods
     if args.method == "dummy_classifier":
         method_obj = DummyClassifier(arg1=1, arg2=2)
 
@@ -81,11 +80,9 @@ def main(args):
         method_obj = KNN(k=args.K, task_kind=args.task, distance_metric=args.distance_metric)
 
     elif args.method == "logistic_regression":
-        ### WRITE YOUR CODE HERE
         method_obj = LogisticRegression(lr=args.lr, max_iters=args.max_iters)
 
     elif args.method == "linear_regression":
-        ### WRITE YOUR CODE HERE
         method_obj = LinearRegression()
 
     else:
