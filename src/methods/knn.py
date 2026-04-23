@@ -29,6 +29,12 @@ class KNN(object):
         Returns:
             pred_labels (np.array): labels of shape (N,)
         """
+        if self.k <= 0: 
+            raise ValueError("k must be a positive integer.")
+        
+        if self.k > len(training_data): 
+            raise ValueError("k cannot be greater than the number of training samples.")
+        
         self.training_data = training_data
         self.training_labels = training_labels
 

@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..utils import get_n_classes, label_to_onehot, onehot_to_label
+from ..utils import label_to_onehot, onehot_to_label, accuracy_fn
 
 
 class LogisticRegression(object):
@@ -44,20 +44,10 @@ class LogisticRegression(object):
         Returns:
             pred_labels (np.array): labels of shape (N,)
         """
-        return self.__logistic_regression_predict_multi(test_data, self.weight)
-    
-    @staticmethod
-    def __accuracy_fn(labels_pred, labels_gt):
-        """
-        Computes the accuracy of the predictions (in percent).
+        if self.weight is None: 
+            raise ValueError("Model must be fitted before calling predict().")
         
-        Args:
-            labels_pred (array): Predicted labels of shape (N,)
-            labels_gt (array): GT labels of shape (N,)
-        Returns:
-            acc (float): Accuracy, in range [0, 100].
-        """
-        return 100 * (np.count_nonzero(1 - np.abs(labels_gt - labels_pred)))/labels_gt.shape[0]
+        return self.__logistic_regression_predict_multi(test_data, self.weight)
 
     @staticmethod
     def __f_softmax(data, W):
@@ -78,21 +68,6 @@ class LogisticRegression(object):
 
         exp_z = np.exp(z)
         return exp_z / np.sum(exp_z, axis=1, keepdims=True)
-
-    def __loss_logistic_multi(self, data, labels, W):
-        """ 
-        Loss function for multi class logistic regression, i.e., multi-class entropy.
-        
-        Args:
-            data (array): Input data of shape (N, D)
-            labels (array): Labels of shape  (N, C)  (in one-hot representation)
-            w (array): Weights of shape (D, C)
-        Returns:
-            float: Loss value 
-        """
-        soft = self.__f_softmax(data, W)
-        first_sum = np.sum(labels * np.log(soft))
-        return -np.mean(np.sum(labels * np.log(soft + 1e-15), axis=1))
 
     def __gradient_logistic_multi(self, data, labels, W):
         """
@@ -118,8 +93,7 @@ class LogisticRegression(object):
             array of shape (N,): Label predictions of data.
         """
         soft = self.__f_softmax(data, W)
-        soft = np.argmax(soft, axis=1)
-        return soft
+        return np.argmax(soft, axis=1)
 
     def __logistic_regression_train_multi(self, data, labels, max_iters, lr):
         """
@@ -133,20 +107,23 @@ class LogisticRegression(object):
         Returns:
             weights (array): weights of the logistic regression model, of shape(D, C)
         """
-        D = data.shape[1]  # number of features
-        C = labels.shape[1]  # number of classes
+        D = data.shape[1]
+        C = labels.shape[1]
+
         # Random initialization of the weights
         weights = np.random.normal(0, 0.1, (D, C))
+
         for it in range(max_iters):
             gradient = self.__gradient_logistic_multi(data, labels, weights)
-            old_weights = weights
-            weights = weights - lr*gradient
+            old_weights = weights.copy()
+            weights = weights - lr * gradient
+
             if np.linalg.norm(old_weights - weights) < 1e-6:
                 print(f"LR has converged after {it+1} iterations!")
                 break
 
             predictions = self.__logistic_regression_predict_multi(data, weights)
-            if self.__accuracy_fn(predictions, onehot_to_label(labels)) == 100:
+            if accuracy_fn(predictions, onehot_to_label(labels)) == 100:
                 print(f"LR has converged after {it+1} iterations!")
                 break
             

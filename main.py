@@ -261,7 +261,7 @@ def main(args):
             plt.xscale("log")
             plt.xlabel("Learning Rate (lr)")
             plt.ylabel("Score (%)")
-            plt.title(f"Logistic Regression - Performance vs. Learing rate (max_iters = {fixed_iter})")
+            plt.title(f"Logistic Regression - Performance vs. Learning rate (max_iters = {fixed_iter})")
             plt.legend()
             plt.grid(True)
             plt.show()
@@ -453,4 +453,4 @@ if __name__ == "__main__":
     main(args)
     end_total = time.perf_counter()
 
-    print(f"\n⏱ Total runtime: {end_total - start_total:.4f} seconds")
+    print(f"\nTotal runtime: {end_total - start_total:.4f} seconds")

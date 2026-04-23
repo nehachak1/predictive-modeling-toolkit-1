@@ -49,8 +49,7 @@ class LinearRegression(object):
         else:
             raise ValueError("regularization must be None or 'l2'.")
 
-        pred_labels = self.predict(X)
-        return pred_labels
+        return self.predict(X)
 
     def predict(self, test_data):
         """
@@ -65,5 +64,4 @@ class LinearRegression(object):
             raise ValueError("Model must be fitted before calling predict().")
 
         X = np.asarray(test_data, dtype=float)
-        pred_labels = X @ self.theta
-        return pred_labels
+        return X @ self.theta
