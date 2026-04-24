@@ -249,6 +249,7 @@ def main(args):
             print(f"Valid F1 = {best[5]:.6f}")
             
             # Plot 1: vary lr for a fixed max_iters
+            best = max(results, key=lambda x: x[5])
             fixed_iter = best[0]
             lrs = []
             train_accs = []
