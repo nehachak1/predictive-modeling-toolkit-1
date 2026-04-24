@@ -237,8 +237,19 @@ def main(args):
 
                     results.append((max_iter, lr, train_acc, train_f1, valid_acc, valid_f1)) 
 
+            # Best configuration based on validation F1
+            best = max(results, key=lambda x: x[5])
+            
+            print("\n---- Best Logistic Regression Configuration ----")
+            print(f"max_iters = {best[0]}")
+            print(f"lr = {best[1]}")
+            print(f"Train Acc = {best[2]:.3f}%")
+            print(f"Train F1 = {best[3]:.6f}")
+            print(f"Valid Acc = {best[4]:.3f}%")
+            print(f"Valid F1 = {best[5]:.6f}")
+            
             # Plot 1: vary lr for a fixed max_iters
-            fixed_iter = args.max_iters
+            fixed_iter = best[0]
             lrs = []
             train_accs = []
             train_f1s = []
@@ -253,17 +264,6 @@ def main(args):
                     valid_accs.append(valid_acc)
                     valid_f1s.append(valid_f1*100)  
 
-            # Find best configuration based on validation F1
-            best = max(results, key=lambda x: x[5])  # x[5] = valid_f1
-
-            print("\n===== BEST LOGISTIC REGRESSION CONFIG =====")
-            print(f"max_iters = {best[0]}")
-            print(f"lr        = {best[1]}")
-            print(f"Train Acc = {best[2]:.3f}%")
-            print(f"Train F1  = {best[3]:.6f}")
-            print(f"Valid Acc = {best[4]:.3f}%")
-            print(f"Valid F1  = {best[5]:.6f}")
-
             plt.figure(figsize=(8, 6))
             plt.plot(lrs, train_accs, 'o--', label="Train Accuracy (%)")
             plt.plot(lrs, valid_accs, 'o-', label="Validation Accuracy (%)")
@@ -272,13 +272,12 @@ def main(args):
             plt.xscale("log")
             plt.xlabel("Learning Rate (lr)")
             plt.ylabel("Score (%)")
-            plt.title(f"Logistic Regression - Performance vs. Learning rate (max_iters = {fixed_iter})")
+            plt.title(f"Logistic Regression - Performance vs. Learning Rate (max_iters = {fixed_iter})")
             plt.legend()
             plt.grid(True)
             plt.show()
 
             # Plot 2: vary max_iters for a fixed lr 
-            best = max(results, key=lambda x: x[5])
             fixed_lr = best[1]
             iters = []
             train_accs2 = []
@@ -301,7 +300,7 @@ def main(args):
             plt.plot(iters, valid_f1s2, 's-', label = "Validation F1-score (%)")
             plt.xlabel("Number of Iterations (max_iters)")
             plt.ylabel("Score (%)")
-            plt.title(f"Logistic Regression - Performance vs. Max Iterations (Lr = {fixed_lr})")
+            plt.title(f"Logistic Regression - Performance vs. Max Iterations (lr = {fixed_lr})")
             plt.legend()
             plt.grid(True)
             plt.show()
