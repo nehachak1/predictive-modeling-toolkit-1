@@ -231,9 +231,9 @@ def main(args):
                     preds_valid_plot = model.predict(test_features)
 
                     train_acc = accuracy_fn(preds_train_plot, train_labels_classif)
-                    train_f1 = macrof1_fn(preds_train_plot, train_labels_classif) * 100
+                    train_f1 = macrof1_fn(preds_train_plot, train_labels_classif)
                     valid_acc = accuracy_fn(preds_valid_plot, test_labels_classif)
-                    valid_f1 = macrof1_fn(preds_valid_plot, test_labels_classif) * 100
+                    valid_f1 = macrof1_fn(preds_valid_plot, test_labels_classif) 
 
                     results.append((max_iter, lr, train_acc, train_f1, valid_acc, valid_f1)) 
 
@@ -249,9 +249,20 @@ def main(args):
                 if max_iter == fixed_iter:
                     lrs.append(lr)
                     train_accs.append(train_acc)
-                    train_f1s.append(train_f1)
+                    train_f1s.append(train_f1*100)
                     valid_accs.append(valid_acc)
-                    valid_f1s.append(valid_f1)  
+                    valid_f1s.append(valid_f1*100)  
+
+            # Find best configuration based on validation F1
+            best = max(results, key=lambda x: x[5])  # x[5] = valid_f1
+
+            print("\n===== BEST LOGISTIC REGRESSION CONFIG =====")
+            print(f"max_iters = {best[0]}")
+            print(f"lr        = {best[1]}")
+            print(f"Train Acc = {best[2]:.3f}%")
+            print(f"Train F1  = {best[3]:.6f}")
+            print(f"Valid Acc = {best[4]:.3f}%")
+            print(f"Valid F1  = {best[5]:.6f}")
 
             plt.figure(figsize=(8, 6))
             plt.plot(lrs, train_accs, 'o--', label="Train Accuracy (%)")
@@ -267,7 +278,8 @@ def main(args):
             plt.show()
 
             # Plot 2: vary max_iters for a fixed lr 
-            fixed_lr = args.lr
+            best = max(results, key=lambda x: x[5])
+            fixed_lr = best[1]
             iters = []
             train_accs2 = []
             train_f1s2 = []
@@ -278,9 +290,9 @@ def main(args):
                 if lr == fixed_lr:
                     iters.append(max_iter)
                     train_accs2.append(train_acc)
-                    train_f1s2.append(train_f1)
+                    train_f1s2.append(train_f1*100)
                     valid_accs2.append(valid_acc)
-                    valid_f1s2.append(valid_f1) 
+                    valid_f1s2.append(valid_f1*100) 
 
             plt.figure(figsize=(8, 6))
             plt.plot(iters, train_accs2, 'o--', label = "Train Accuracy (%)")
