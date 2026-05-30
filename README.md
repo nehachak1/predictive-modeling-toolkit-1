@@ -94,8 +94,3 @@ python main.py \
 - Python
 - NumPy
 - Matplotlib
-
-## Authors
-
-- Neha Chakraborty
-- Guillaume Marie Lepin
